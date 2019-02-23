@@ -10,11 +10,12 @@ jobs:
     working_directory: /go/src/github.com/dgruber/qsub
     steps:
       - checkout
+      - run: GO111MODULE=on; go get -d ./...
       - run: GO111MODULE=on; go build -a -v
-      - run: go test -v ./...
+      - run: GO111MODULE=on; go test -v ./...
       - run:
           name: Code coverage file
-          command: go test ./pkg/cli ./pkg/job ./pkg/template -race -coverprofile=coverage.txt -covermode=atomic
+          command: GO111MODULE=on; go test ./pkg/cli ./pkg/job ./pkg/template -race -coverprofile=coverage.txt -covermode=atomic
       - run:
           name: Code coverage
           command: bash <(curl -s https://codecov.io/bash)
