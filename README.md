@@ -1,5 +1,8 @@
 # qsub for Kubernetes
 
+[![CircleCI](https://circleci.com/gh/dgruber/qsub.svg?style=svg)](https://circleci.com/gh/dgruber/qsub)
+[![codecov](https://codecov.io/gh/dgruber/qsub/branch/master/graph/badge.svg)](https://codecov.io/gh/dgruber/qsub)
+
 _qsub_ is a command line tool for submitting batch jobs to a
 workload manager. Its basic functionality is described and specified in
 the [POSIX standard](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/qsub.html). Several HPC job schedulers (like Univa Grid Engine) provide

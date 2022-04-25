@@ -10,7 +10,12 @@ jobs:
     working_directory: /go/src/github.com/dgruber/qsub
     steps:
       - checkout
-      - run: GO111MODULE=on; go build -a -v
+      - run: 
+          name: "Setup custom environment variables"
+          command: |
+            echo 'export GO111MODULE="on"' >> $BASH_ENV
+      - run: go get -d ./...
+      - run: go build -a -v
       - run: go test -v ./...
       - run:
           name: Code coverage file
