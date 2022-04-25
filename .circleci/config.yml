@@ -1,21 +1,31 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
-jobs:
-  build:
+version: 2.1
+executors:
+  my-custom-executor:
     docker:
-      - image: circleci/golang:latest
-     
-    working_directory: /go/src/github.com/dgruber/qsub
+      - image: cimg/go:latest
+        auth:
+          # ensure you have first added these secrets
+          # visit app.circleci.com/settings/project/github/dgruber/qsub/environment-variables
+          username: $DOCKER_HUB_USER
+          password: $DOCKER_HUB_PASSWORD
+jobs:
+  qsub:
+
+    executor: my-custom-executor
     steps:
       - checkout
-      - run: go get -d ./...
-      - run: go build -a -v
-      - run: go test -v ./...
+      - run: |
+          go get -d ./...
+          go build -a -v
+          go test -v ./...
       - run:
           name: Code coverage file
           command: go test ./pkg/cli ./pkg/job ./pkg/template -race -coverprofile=coverage.txt -covermode=atomic
       - run:
           name: Code coverage
           command: bash <(curl -s https://codecov.io/bash)
+
+workflows:
+  my-custom-workflow:
+    jobs:
+      - qsub
