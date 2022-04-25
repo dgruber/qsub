@@ -10,10 +10,6 @@ jobs:
     working_directory: /go/src/github.com/dgruber/qsub
     steps:
       - checkout
-      - run: 
-          name: "Setup custom environment variables"
-          command: |
-            echo 'export GO111MODULE="on"' >> $BASH_ENV
       - run: go get -d ./...
       - run: go build -a -v
       - run: go test -v ./...
