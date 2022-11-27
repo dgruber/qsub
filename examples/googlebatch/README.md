@@ -14,7 +14,7 @@ Choose a GOOGLE_REGION:
 
 Submit a Blast Biocontainer as DRMAA2 JSON file:
 
-Adapt the blat.json file to point to a Google Cloud bucket you own (gs://).
+Adapt the _blast.json_ file to point to a Google Cloud bucket you own (gs://).
 
     qsub -b googlebatch -j ./blast.json
     projects/<YOUR_GOOGLE_PROJECT_ID>/locations/us-central1/jobs/drmaa2-166957536-9685
