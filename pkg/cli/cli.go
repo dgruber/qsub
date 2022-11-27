@@ -17,6 +17,9 @@ type Commandline struct {
 	Labels    []string
 	Cmd       []string
 	Scheduler string
+	// support of other backends with job templates
+	Backend         string
+	JobTemplatePath string
 }
 
 // ParseCommandline takes command line args and parses them.
@@ -88,6 +91,7 @@ argumentLoop:
 			}
 			cli.Scheduler = args[i+1]
 			i++
+			continue
 		case "-v":
 			if len(args) <= i+1 {
 				err = errors.New("Option -v requires an argument.")
@@ -106,6 +110,22 @@ argumentLoop:
 			}
 			i++
 			continue
+		case "-b", "--backend":
+			if len(args) <= i+1 {
+				err = errors.New("Option backend requires an argument.")
+				break argumentLoop
+			}
+			cli.Backend = args[i+1]
+			i++
+			continue
+		case "-j", "--jobTemplate":
+			if len(args) <= i+1 {
+				err = errors.New("Option jobTemplate requires an argument.")
+				break argumentLoop
+			}
+			cli.JobTemplatePath = args[i+1]
+			i++
+			continue
 		default:
 			if strings.HasPrefix(args[i], "-") {
 				err = fmt.Errorf("Unknown argument %s", args[i])
@@ -114,6 +134,18 @@ argumentLoop:
 			cli.Cmd = args[i:]
 			break argumentLoop
 		}
+	}
+
+	// backend requires job template
+	if cli.Backend != "" && cli.JobTemplatePath == "" {
+		err = errors.New("backend requires job template path")
+		return cli, err
+	} else if cli.Backend == "" && cli.JobTemplatePath != "" {
+		err = errors.New("job template path requires backend")
+		return cli, err
+	}
+	if cli.Backend != "" && cli.JobTemplatePath != "" {
+		return cli, nil
 	}
 	if cli.Cmd == nil {
 		return cli, errors.New("No command given.")
@@ -126,7 +158,7 @@ argumentLoop:
 
 // Help returns the help message.
 func Help() string {
-	usage := `qsub is a tool for submitting batch jobs to kubernetes.
+	usage := `qsub is a tool for submitting batch jobs not only to Kubernetes.
 
 Usage:
 	Setting a container image and a command is mandatory. The container
@@ -136,6 +168,8 @@ Usage:
 	   	[-S | --namespace kubernetes_namespace]
 		[-v env=content,...]
 		[-l label1,...]
+		[-b | --backend [process|docker|kubernetes|googlebatch]
+		 -j | --jobTemplate job_template_file]
 		[-I | --image] container_image
 	   	command [args...]
 `
