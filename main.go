@@ -39,5 +39,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(4)
 	}
-	fmt.Fprintf(os.Stdout, "%s\n", jobID)
+	if jobID != "" {
+		fmt.Printf("Job ID: %s\n", jobID)
+	}
 }

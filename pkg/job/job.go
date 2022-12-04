@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/dgruber/drmaa2interface"
+	"github.com/dgruber/drmaa2os/pkg/jobtracker/simpletracker"
 	"github.com/dgruber/wfl"
 	"github.com/dgruber/wfl/pkg/context/docker"
 	"github.com/dgruber/wfl/pkg/context/googlebatch"
@@ -27,7 +28,10 @@ func SubmitToBackend(backend string, jt drmaa2interface.JobTemplate) (string, er
 	case "kubernetes":
 		return Submit(jt)
 	case "process":
-		return SubmitProcess(jt)
+		// let's ignore the internal ID as it is not for
+		// the user relevant
+		_, err := SubmitProcess(jt)
+		return "", err
 	case "docker":
 		return SubmitDocker(jt)
 	case "googlebatch":
@@ -40,7 +44,20 @@ func SubmitToBackend(backend string, jt drmaa2interface.JobTemplate) (string, er
 }
 
 func SubmitProcess(jt drmaa2interface.JobTemplate) (string, error) {
-	flow := wfl.NewWorkflow(wfl.NewProcessContext().OnError(fp)).OnError(fp)
+	// for better performance this could be tuned
+	ctx := wfl.NewProcessContextByCfgWithInitParams(wfl.ProcessConfig{
+		/*
+			DBFile:               "drmaa2session.db",
+			JobDBFile:            "drmaa2job.db",
+			PersistentJobStorage: true,
+		*/
+	}, simpletracker.SimpleTrackerInitParams{
+		/*
+			UsePersistentJobStorage: true,
+			DBFilePath:              "drmaa2job.db",
+		*/
+	}).OnError(fp)
+	flow := wfl.NewWorkflow(ctx).OnError(fp)
 	return Run(flow, jt)
 }
 

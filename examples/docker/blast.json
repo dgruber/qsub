@@ -1,0 +1,10 @@
+{
+    "remoteCommand": "/host/blast.sh",
+    "jobCategory": "biocontainers/blast:2.2.31",
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout",
+    "stageInFiles": {
+      "/Users/daniel/go/src/github.com/dgruber/qsub/examples/docker": "/host"
+    },
+    "workingDirectory": "/tmp"
+}

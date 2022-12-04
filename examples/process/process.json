@@ -1,0 +1,11 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+      "-c",
+      "echo 'hello world' && sleep 120"
+    ],
+    "minSlots": 1,
+    "maxSlots": 1,
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout"
+}
