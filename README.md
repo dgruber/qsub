@@ -8,8 +8,8 @@ workload manager. Its basic functionality is described and specified in
 the [POSIX standard](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/qsub.html). Several HPC job schedulers (like Grid Engine, SLURM, LSF, Torque) provide
 a _qsub_ command line utility enhanced with an [huge amount of extensions](http://gridengine.eu/mangridengine/manuals.html).
 
-This repository provides a qsub implementation for local processes, Docker,
-Kubernetes, Google Batch, ...
+This repository provides a simple qsub implementation for local processes, Docker,
+Kubernetes, Google Batch, PubSub, ...
 
 ## Installation
 
@@ -90,3 +90,4 @@ jobs can be submitted to other backends as well:
 - Google Batch (-b googlebatch)
 - Local Process (-b process)
 - Docker (-b docker)
+- Sending a DRMAA2 JobTemplated wrapped as CloudEvent into Google PubSub (-b pubsub)
