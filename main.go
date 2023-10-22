@@ -34,12 +34,25 @@ func main() {
 		}
 	}
 
-	jobID, err := job.SubmitToBackend(request.Backend, jt)
+	_, job, err := job.SubmitToBackend(request.Backend, jt)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(4)
 	}
-	if jobID != "" {
-		fmt.Printf("Job ID: %s\n", jobID)
+	fmt.Printf("Job submitted\n")
+
+	if job != nil {
+		fmt.Printf("Job ID: %s\n", job.JobID())
+	}
+	if request.Sync {
+		// wait for the job to finish
+		if job == nil {
+			fmt.Fprintf(os.Stderr,
+				fmt.Sprintf("Backend %s does not yet support sync\n",
+					request.Backend))
+		} else {
+			fmt.Printf("Waiting for job to finish...\n")
+			job.Wait()
+		}
 	}
 }

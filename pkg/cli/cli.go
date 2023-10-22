@@ -17,6 +17,8 @@ type Commandline struct {
 	Labels    []string
 	Cmd       []string
 	Scheduler string
+	// Sync will keep qsub running as long the job runs
+	Sync bool
 	// support of other backends with job templates
 	Backend         string
 	JobTemplatePath string
@@ -126,6 +128,9 @@ argumentLoop:
 			cli.JobTemplatePath = args[i+1]
 			i++
 			continue
+		case "-s", "--sync":
+			cli.Sync = true
+			continue
 		default:
 			if strings.HasPrefix(args[i], "-") {
 				err = fmt.Errorf("Unknown argument %s", args[i])
@@ -134,6 +139,10 @@ argumentLoop:
 			cli.Cmd = args[i:]
 			break argumentLoop
 		}
+	}
+
+	if err != nil {
+		return cli, err
 	}
 
 	// backend requires job template
@@ -147,7 +156,7 @@ argumentLoop:
 	if cli.Backend != "" && cli.JobTemplatePath != "" {
 		return cli, nil
 	}
-	if cli.Cmd == nil {
+	if cli.Cmd == nil && cli.Backend != "docker" {
 		return cli, errors.New("No command given.")
 	}
 	if cli.Image == "" {
@@ -161,17 +170,22 @@ func Help() string {
 	usage := `qsub is a tool for submitting batch jobs not only to Kubernetes.
 
 Usage:
-	Setting a container image and a command is mandatory. The container
+	Either choose a backend together with a DRMAA2 JSON file or 
+	select a container image and a command. The container
 	image can also be set by a QSUB_IMAGE environment variable.
 
 	qsub [-N | --jobname unique_name_of_job]
 	   	[-S | --namespace kubernetes_namespace]
 		[-v env=content,...]
 		[-l label1,...]
-		[-b | --backend [process|docker|kubernetes|googlebatch]
-		 -j | --jobTemplate job_template_file]
-		[-I | --image] container_image
-	   	command [args...]
+		[-s | --sync]
+		[-I | --image] container_image]
+		[ 
+			-b | --backend [process|docker|kubernetes|googlebatch|pubsub] 
+			-j | --jobTemplate job_template_file
+		 |
+	   		command [args...]
+		]
 `
 	return usage
 }

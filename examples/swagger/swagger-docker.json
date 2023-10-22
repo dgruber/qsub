@@ -1,0 +1,9 @@
+{
+    "extension": {
+      "extensionList": {
+        "exposedPorts": "8080:8080/tcp"
+      }
+    },
+    "jobCategory": "swaggerapi/swagger-editor"
+}
+

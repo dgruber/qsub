@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -10,6 +11,9 @@ import (
 	"github.com/dgruber/wfl/pkg/context/docker"
 	"github.com/dgruber/wfl/pkg/context/googlebatch"
 	"github.com/dgruber/wfl/pkg/context/kubernetes"
+
+	cepubsub "github.com/cloudevents/sdk-go/protocol/pubsub/v2"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 func fp(e error) {
@@ -18,32 +22,35 @@ func fp(e error) {
 }
 
 // Submit runs a batch job in the k8s cluster the current context points to.
-func Submit(jt drmaa2interface.JobTemplate) (string, error) {
-	flow := wfl.NewWorkflow(kubernetes.NewKubernetesContext().OnError(fp)).OnError(fp)
-	return Run(flow, jt)
+func Submit(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
+	flow := wfl.NewWorkflow(kubernetes.NewKubernetesContext().
+		OnError(fp)).OnError(fp)
+	job, err := Run(flow, jt)
+	return flow, job, err
 }
 
-func SubmitToBackend(backend string, jt drmaa2interface.JobTemplate) (string, error) {
+func SubmitToBackend(backend string, jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
 	switch backend {
 	case "kubernetes":
 		return Submit(jt)
 	case "process":
 		// let's ignore the internal ID as it is not for
 		// the user relevant
-		_, err := SubmitProcess(jt)
-		return "", err
+		return SubmitProcess(jt)
 	case "docker":
 		return SubmitDocker(jt)
 	case "googlebatch":
 		return SubmitGoogleBatch(jt)
+	case "pubsub":
+		return SubmitToPubSub(jt)
 	case "mpioperator":
-		return "", fmt.Errorf("not implemented yet")
+		return nil, nil, fmt.Errorf("not implemented yet")
 	default:
-		return "", fmt.Errorf("Backend %s not supported", backend)
+		return nil, nil, fmt.Errorf("Backend %s not supported", backend)
 	}
 }
 
-func SubmitProcess(jt drmaa2interface.JobTemplate) (string, error) {
+func SubmitProcess(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
 	// for better performance this could be tuned
 	ctx := wfl.NewProcessContextByCfgWithInitParams(wfl.ProcessConfig{
 		/*
@@ -58,36 +65,95 @@ func SubmitProcess(jt drmaa2interface.JobTemplate) (string, error) {
 		*/
 	}).OnError(fp)
 	flow := wfl.NewWorkflow(ctx).OnError(fp)
-	return Run(flow, jt)
+	job, err := Run(flow, jt)
+	return flow, job, err
 }
 
-func SubmitDocker(jt drmaa2interface.JobTemplate) (string, error) {
-	flow := wfl.NewWorkflow(docker.NewDockerContext().OnError(fp)).OnError(fp)
-	return Run(flow, jt)
+func SubmitDocker(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
+	flow := wfl.NewWorkflow(
+		docker.NewDockerContext().
+			OnError(fp)).OnError(fp)
+	job, err := Run(flow, jt)
+	return flow, job, err
 }
 
-func SubmitGoogleBatch(jt drmaa2interface.JobTemplate) (string, error) {
+func SubmitGoogleBatch(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
 	region := os.Getenv("GOOGLE_REGION")
 	if region == "" {
 		region = "us-central1"
 	}
 	project := os.Getenv("GOOGLE_PROJECT")
 	if project == "" {
-		return "", fmt.Errorf("GOOGLE_PROJECT environment variable not set")
+		return nil, nil, fmt.Errorf("GOOGLE_PROJECT environment variable not set")
 	}
 	flow := wfl.NewWorkflow(googlebatch.NewGoogleBatchContext(
 		region,
 		project,
 	).OnError(fp)).OnError(fp)
-	return Run(flow, jt)
+	job, err := Run(flow, jt)
+	return flow, job, err
 }
 
-func Run(flow *wfl.Workflow, jt drmaa2interface.JobTemplate) (string, error) {
+// SubmitToPubSub sends job template a CloudEvent to a PubSub topic. It requires
+// the job template to contain the extension "googleProjectID" which is the
+// Google Cloud project ID. If the extension is not set the environment variable
+// GOOGLE_PROJECT is used. The queueName of the job template is used as the
+// PubSub topic name.
+func SubmitToPubSub(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
+	ctx := context.Background()
+
+	googleProject := os.Getenv("GOOGLE_PROJECT")
+	if jt.ExtensionList != nil {
+		googleProject, _ = jt.ExtensionList["googleProjectID"]
+	}
+	if googleProject == "" {
+		return nil, nil,
+			fmt.Errorf("job template does not contain googleProjectID extension")
+	}
+
+	pubsubTopic := jt.QueueName
+	if pubsubTopic == "" {
+		return nil, nil,
+			fmt.Errorf("job template does not contain the PubSub topic specified as the queueName")
+	}
+
+	sender, err := cepubsub.New(ctx, cepubsub.WithProjectID(googleProject),
+		cepubsub.WithTopicID(pubsubTopic))
+	if err != nil {
+		return nil, nil,
+			fmt.Errorf("failed to create pubsub transport: %v", err)
+	}
+	defer sender.Close(ctx)
+
+	client, err := cloudevents.NewClient(sender,
+		cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create pubsub client: %v", err)
+	}
+
+	evt := cloudevents.NewEvent()
+	evt.SetType("org.drmaa2.events.jobtemplate")
+	evt.SetSource("qsub")
+	err = evt.SetData("application/json", jt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to set CloudEvent data: %v", err)
+	}
+
+	result := client.Send(ctx, evt)
+	if cloudevents.IsUndelivered(result) {
+		return nil, nil, fmt.Errorf("failed to send CloudEvent to topic %s: %v",
+			pubsubTopic, result)
+	}
+
+	return nil, nil, nil
+}
+
+func Run(flow *wfl.Workflow, jt drmaa2interface.JobTemplate) (*wfl.Job, error) {
 	job := flow.RunT(jt)
 	if job.Errored() {
-		return "", job.LastError()
+		return nil, job.LastError()
 	}
-	return job.JobID(), nil
+	return job, nil
 }
 
 func ReadJobTemplateFromJSONFile(path string) (drmaa2interface.JobTemplate, error) {

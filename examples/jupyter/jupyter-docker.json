@@ -1,0 +1,12 @@
+{
+    "extension": {
+      "extensionList": {
+        "exposedPorts": "10000:8888/tcp",
+        "rm": "true"
+      }
+    },
+    "outputPath":  "/dev/stdout",
+    "errorPath":   "/dev/stderr",
+    "jobCategory": "jupyter/scipy-notebook"
+}
+
