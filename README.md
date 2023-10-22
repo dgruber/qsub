@@ -3,17 +3,26 @@
 [![CircleCI](https://circleci.com/gh/dgruber/qsub.svg?style=svg)](https://circleci.com/gh/dgruber/qsub)
 [![codecov](https://codecov.io/gh/dgruber/qsub/branch/master/graph/badge.svg)](https://codecov.io/gh/dgruber/qsub)
 
-_qsub_ is a command line tool for submitting batch jobs to a
-workload manager. Its basic functionality is described and specified in
-the [POSIX standard](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/qsub.html). Several HPC job schedulers (like Grid Engine, SLURM, LSF, Torque) provide
-a _qsub_ command line utility enhanced with an [huge amount of extensions](http://gridengine.eu/mangridengine/manuals.html).
+_qsub_ is a command line tool used for submitting batch jobs. It has basic functionality defined in the [POSIX standard](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/qsub.html). Various high-performance computing (HPC) job schedulers, such as Grid Engine, SLURM, LSF, and Torque, offer an extended version of qsub with [additional features](http://gridengine.eu/mangridengine/manuals.html).
 
-This repository provides a simple qsub implementation for local processes, Docker,
-Kubernetes, Google Batch, PubSub, ...
+This repository offers a simplified implementation of qsub for running jobs locally, in Docker containers, on Kubernetes, Google Batch, PubSub, and more. It enables users to easily submit and manage batch jobs in different environments.
 
 ## Installation
 
-_qsub_ can be build directly (GO111MODULE=on) from the sources or alternatively pre-build binaries for darwin and linux can be downloaded from the builds dir.
+_qsub_ can be build directly from the sources or alternatively pre-build binaries for darwin and linux can be downloaded from the builds dir.
+
+## Using a DRMAA2 JSON File
+
+By using a [DRMAA2 compatible](https://github.com/dgruber/drmaa2interface) JSON file jobs can be submitted to several backends:
+
+- Google Batch (-b googlebatch)
+- Local Process (-b process)
+- Docker (-b docker)
+- Sending a DRMAA2 JobTemplate wrapped as CloudEvent into Google PubSub (-b pubsub)
+
+```
+   qsub -b process -j ./jobtemplate.json
+```
 
 ## Usage for Kubernetes
 
@@ -81,13 +90,3 @@ In order to let the job be scheduled by a non-default scheduler (like poseidon
 or kube-batch) the _--scheduler_ argument can be used.
 
     qsub --scheduler poseidon --img busybox:latest sleep 123
-
-## Using DRMAA2 JSON File
-
-By using a [DRMAA2 compatible](https://github.com/dgruber/drmaa2interface) JSON file the
-jobs can be submitted to other backends as well:
-
-- Google Batch (-b googlebatch)
-- Local Process (-b process)
-- Docker (-b docker)
-- Sending a DRMAA2 JobTemplated wrapped as CloudEvent into Google PubSub (-b pubsub)
