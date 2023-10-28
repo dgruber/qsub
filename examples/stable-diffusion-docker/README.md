@@ -16,5 +16,7 @@ please check https://github.com/fboulnois/stable-diffusion-docker/tree/main
 The image creation time (and quality) highly depends on the resolution and 
 iterations and of course on the absense of a GPU.
 
+```bash
    docker pull ghcr.io/fboulnois/stable-diffusion-docker:1.41.0
    qsub -b docker -s -j stable-diffusion.json
+```
