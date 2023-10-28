@@ -1,0 +1,11 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+        "-c",
+        "cat /etc/os-release"
+    ],
+    "jobCategory": "registry.suse.com/bci/bci-micro:latest",
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout",
+    "workingDirectory": "/tmp"
+}

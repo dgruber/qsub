@@ -1,0 +1,33 @@
+{
+    "args": [
+        "--device",
+        "cpu",
+        "--onnx",
+        "--steps",
+        "75",
+        "--height",
+        "256",
+        "--width",
+        "256", 
+        "wonderful beach; very bright; with sun; crisp"
+    ],
+    "jobCategory": "ghcr.io/fboulnois/stable-diffusion-docker:1.41.0",
+    "jobEnvironment": {
+        "SOME_ENV": "value"
+      },
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout",
+    "stageInFiles": {
+      "/Users/daniel/go/src/github.com/dgruber/qsub/examples/stable-diffusion-docker/token.txt": "/home/huggingface/token.txt",
+      "/tmp/qsub/input": "/home/huggingface/input",
+      "/tmp/qsub/output": "/home/huggingface/output",
+      "/tmp/qsub/cache": "/home/huggingface/.cache/huggingface",
+      "/tmp/qsub/tmp": "/tmp"
+    },
+    "workingDirectory": "/home/huggingface",
+    "extension": {
+        "extensionList": {
+          "rm": "true"
+        }
+      }
+}

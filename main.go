@@ -52,7 +52,8 @@ func main() {
 					request.Backend))
 		} else {
 			fmt.Printf("Waiting for job to finish...\n")
-			job.Wait()
+			// forwards the exit code of the job
+			os.Exit(job.ExitStatus())
 		}
 	}
 }

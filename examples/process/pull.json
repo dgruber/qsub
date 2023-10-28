@@ -1,0 +1,14 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+      "-c",
+      "echo pulling image ${IMAGE} && docker pull ${IMAGE}"
+    ],
+    "jobEnvironment": {
+        "IMAGE": "registry.suse.com/bci/bci-micro:latest"
+      },
+    "minSlots": 1,
+    "maxSlots": 1,
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout"
+}

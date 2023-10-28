@@ -1,0 +1,9 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+      "-c",
+      "for i in `seq 1 100`; do echo $i; done && exit 77"
+    ],
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout"
+}
