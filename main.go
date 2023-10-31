@@ -39,9 +39,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(4)
 	}
-	fmt.Printf("Job submitted\n")
+	if !request.Quiet {
+		fmt.Printf("Job submitted\n")
+	}
 
-	if job != nil {
+	if job != nil && !request.Quiet {
 		fmt.Printf("Job ID: %s\n", job.JobID())
 	}
 	if request.Sync {
@@ -51,9 +53,15 @@ func main() {
 				fmt.Sprintf("Backend %s does not yet support sync\n",
 					request.Backend))
 		} else {
-			fmt.Printf("Waiting for job to finish...\n")
-			// forwards the exit code of the job
-			os.Exit(job.ExitStatus())
+			if !request.Quiet {
+				fmt.Printf("Waiting for job to finish...\n")
+			}
+			// forwards the exit code of the job + 128
+			exitCode := job.ExitStatus()
+			if exitCode == 0 {
+				os.Exit(0)
+			}
+			os.Exit(exitCode + 128)
 		}
 	}
 }

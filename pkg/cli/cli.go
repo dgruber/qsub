@@ -22,6 +22,9 @@ type Commandline struct {
 	// support of other backends with job templates
 	Backend         string
 	JobTemplatePath string
+	// Quiet will not print any additional information on stdout
+	// besides errors
+	Quiet bool
 }
 
 // ParseCommandline takes command line args and parses them.
@@ -128,6 +131,9 @@ argumentLoop:
 			cli.JobTemplatePath = args[i+1]
 			i++
 			continue
+		case "--quiet":
+			cli.Quiet = true
+			continue
 		case "-s", "--sync":
 			cli.Sync = true
 			continue
@@ -178,6 +184,7 @@ Usage:
 	   	[-S | --namespace kubernetes_namespace]
 		[-v env=content,...]
 		[-l label1,...]
+		[--quiete]
 		[-s | --sync]
 		[-I | --image] container_image]
 		[ 
