@@ -1,0 +1,10 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+        "-c",
+        "while read line; do echo $((line * 2)); done"
+    ],
+    "inputPath": "/dev/stdin",
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout"
+}

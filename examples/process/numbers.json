@@ -1,0 +1,9 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+      "-c",
+      "for i in {1..100}; do echo $i; sleep 0.1; done"
+    ],
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout"
+}
