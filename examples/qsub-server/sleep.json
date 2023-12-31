@@ -1,0 +1,9 @@
+{
+    "remoteCommand": "/bin/bash",
+    "args": [
+      "-c",
+      "sleep 1234"
+    ],
+    "errorPath": "/dev/stderr",
+    "outputPath": "/dev/stdout"
+}

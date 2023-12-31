@@ -14,7 +14,7 @@ var _ = Describe("Cli", func() {
 	Context("ParseCommandLine", func() {
 
 		It("should set a job template, quiet, and synced", func() {
-			cli, err := ParseCommandline([]string{"--sync", "--quiete", "-b",
+			cli, err := ParseCommandline([]string{"--sync", "--quiet", "-b",
 				"process", "-j", "jobtemplate.json"})
 			Expect(err).To(BeNil())
 			Expect(cli.Sync).To(BeTrue())
@@ -128,6 +128,18 @@ var _ = Describe("Cli", func() {
 			Expect(cli.Scheduler).To(Equal(""))
 		})
 
+		It("should set the server part", func() {
+			cli, err := ParseCommandline([]string{"--serve", "localhost:8080"})
+			Expect(err).To(BeNil())
+			Expect(cli.ServeHost).To(Equal("localhost"))
+			Expect(cli.ServePort).To(Equal(8080))
+
+			cli, err = ParseCommandline([]string{"--serve", "localhost"})
+			Expect(err).To(BeNil())
+			Expect(cli.ServeHost).To(Equal("localhost"))
+			Expect(cli.ServePort).To(Equal(13177))
+		})
+
 	})
 
 	Context("ParseCommandLine errors", func() {
@@ -188,6 +200,11 @@ var _ = Describe("Cli", func() {
 		It("should error with unknown parameters", func() {
 			_, err := ParseCommandline([]string{"--img", "golang:latest",
 				"sleep", "123"})
+			Expect(err).NotTo(BeNil())
+		})
+
+		It("should error when serve has no parameters", func() {
+			_, err := ParseCommandline([]string{"--serve"})
 			Expect(err).NotTo(BeNil())
 		})
 

@@ -3,26 +3,28 @@
         "--device",
         "cpu",
         "--onnx",
+        "--skip",
+        "--seed",
+        "13177",
         "--steps",
-        "75",
+        "24",
         "--height",
-        "256",
+        "512",
         "--width",
-        "256", 
-        "wonderful beach; very bright; with sun; crisp"
+        "512",
+        "Beach with cat and waves. That's fun!"
     ],
     "jobCategory": "ghcr.io/fboulnois/stable-diffusion-docker:1.41.0",
     "jobEnvironment": {
-        "SOME_ENV": "value"
-      },
+       "HF_TOKEN": "TODO_ADD_YOUR_TOKEN_HERE"
+    },
     "errorPath": "/dev/stderr",
     "outputPath": "/dev/stdout",
     "stageInFiles": {
-      "/Users/daniel/go/src/github.com/dgruber/qsub/examples/stable-diffusion-docker/token.txt": "/home/huggingface/token.txt",
-      "/tmp/qsub/input": "/home/huggingface/input",
-      "/tmp/qsub/output": "/home/huggingface/output",
-      "/tmp/qsub/cache": "/home/huggingface/.cache/huggingface",
-      "/tmp/qsub/tmp": "/tmp"
+      "./input": "/home/huggingface/input",
+      "./output": "/home/huggingface/output",
+      "./cache": "/home/huggingface/.cache/huggingface",
+      "/tmp": "/tmp"
     },
     "workingDirectory": "/home/huggingface",
     "extension": {

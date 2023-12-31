@@ -19,6 +19,7 @@ By using a [DRMAA2 compatible](https://github.com/dgruber/drmaa2interface) JSON 
 - Local Process (-b process)
 - Docker (-b docker)
 - Sending a DRMAA2 JobTemplate wrapped as CloudEvent into Google PubSub (-b pubsub)
+- Sending a job to a remote "qsub --server"
 
 ```
    qsub -b process -j ./jobtemplate.json

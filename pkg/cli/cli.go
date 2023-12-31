@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +26,10 @@ type Commandline struct {
 	// Quiet will not print any additional information on stdout
 	// besides errors
 	Quiet bool
+	// qsub as server
+	Client    bool
+	ServeHost string
+	ServePort int
 }
 
 // ParseCommandline takes command line args and parses them.
@@ -137,6 +142,51 @@ argumentLoop:
 		case "-s", "--sync":
 			cli.Sync = true
 			continue
+		case "--server":
+			cli.Client = true
+			if len(args) <= i+1 {
+				err = errors.New("Option server requires an argument.")
+				break argumentLoop
+			}
+			s := strings.Split(args[i+1], ":")
+			if len(s) == 1 {
+				cli.ServeHost = s[0]
+				cli.ServePort = 13177
+			} else if len(s) == 2 {
+				cli.ServeHost = s[0]
+				cli.ServePort, err = strconv.Atoi(s[1])
+				if err != nil {
+					err = fmt.Errorf("Failed to parse port number: %s",
+						err.Error())
+					break argumentLoop
+				}
+			} else {
+				err = fmt.Errorf("Failed to parse host and port: %s",
+					args[i+1])
+				break argumentLoop
+			}
+			i++
+			continue
+		case "--serve":
+			if len(args) <= i+1 {
+				err = errors.New("Option serve requires an argument.")
+				break argumentLoop
+			}
+			if strings.Contains(args[i+1], ":") {
+				split := strings.Split(args[i+1], ":")
+				cli.ServeHost = split[0]
+				cli.ServePort, err = strconv.Atoi(split[1])
+				if err != nil {
+					err = fmt.Errorf("Failed to parse port number: %s",
+						err.Error())
+					break argumentLoop
+				}
+			} else {
+				cli.ServeHost = args[i+1]
+				cli.ServePort = 13177
+			}
+			i++
+			continue
 		default:
 			if strings.HasPrefix(args[i], "-") {
 				err = fmt.Errorf("Unknown argument %s", args[i])
@@ -149,6 +199,11 @@ argumentLoop:
 
 	if err != nil {
 		return cli, err
+	}
+
+	// --serve only requires host and port
+	if cli.ServeHost != "" && cli.ServePort != 0 {
+		return cli, nil
 	}
 
 	// backend requires job template
@@ -184,8 +239,9 @@ Usage:
 	   	[-S | --namespace kubernetes_namespace]
 		[-v env=content,...]
 		[-l label1,...]
-		[--quiete]
+		[--quiet]
 		[-s | --sync]
+		[--serve host[:port] ]
 		[-I | --image] container_image]
 		[ 
 			-b | --backend [process|docker|kubernetes|googlebatch|pubsub] 

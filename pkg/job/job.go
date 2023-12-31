@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/dgruber/drmaa2interface"
+	"github.com/dgruber/drmaa2os/pkg/jobtracker/remote/client"
+	genclient "github.com/dgruber/drmaa2os/pkg/jobtracker/remote/client/generated"
 	"github.com/dgruber/drmaa2os/pkg/jobtracker/simpletracker"
+	"github.com/dgruber/qsub/pkg/cli"
+	"github.com/dgruber/qsub/pkg/server"
 	"github.com/dgruber/wfl"
 	"github.com/dgruber/wfl/pkg/context/docker"
 	"github.com/dgruber/wfl/pkg/context/googlebatch"
@@ -29,8 +34,8 @@ func Submit(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
 	return flow, job, err
 }
 
-func SubmitToBackend(backend string, jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
-	switch backend {
+func SubmitToBackend(request cli.Commandline, jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
+	switch request.Backend {
 	case "kubernetes":
 		return Submit(jt)
 	case "process":
@@ -43,10 +48,12 @@ func SubmitToBackend(backend string, jt drmaa2interface.JobTemplate) (*wfl.Workf
 		return SubmitGoogleBatch(jt)
 	case "pubsub":
 		return SubmitToPubSub(jt)
+	case "server":
+		return SubmitToQsubServer(request.ServeHost, request.ServePort, jt)
 	case "mpioperator":
 		return nil, nil, fmt.Errorf("not implemented yet")
 	default:
-		return nil, nil, fmt.Errorf("Backend %s not supported", backend)
+		return nil, nil, fmt.Errorf("Backend %s not supported", request.Backend)
 	}
 }
 
@@ -90,6 +97,44 @@ func SubmitGoogleBatch(jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job,
 		region,
 		project,
 	).OnError(fp)).OnError(fp)
+	job, err := Run(flow, jt)
+	return flow, job, err
+}
+
+func SubmitToQsubServer(host string, port int, jt drmaa2interface.JobTemplate) (*wfl.Workflow, *wfl.Job, error) {
+	password, err := server.GetOrCreateSecret()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Printf("Using password %s", password)
+	basicAuthProvider, err := securityprovider.NewSecurityProviderBasicAuth(
+		"qsub", password)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	srv := fmt.Sprintf("http://%s:%d",
+		host, port)
+
+	initParams := client.ClientTrackerParams{
+		Server: srv,
+		Path:   "/qsub",
+		Opts: []genclient.ClientOption{
+			genclient.WithRequestEditorFn(basicAuthProvider.Intercept),
+		},
+	}
+
+	ctx := wfl.NewRemoteContext(wfl.RemoteConfig{}, &initParams)
+	if ctx.HasError() {
+		return nil, nil, ctx.CtxCreationErr
+	}
+
+	flow := wfl.NewWorkflow(ctx)
+	if flow.HasError() {
+		return nil, nil, flow.Error()
+	}
+
 	job, err := Run(flow, jt)
 	return flow, job, err
 }

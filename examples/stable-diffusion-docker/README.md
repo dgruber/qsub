@@ -1,22 +1,14 @@
-# Running Stable Diffusion as DRMAA2 JSON Job Template
+# Running Stable Diffusion with DRMAA2 JSON Job Template
 
-This example runs Stable Diffusion in a container without GPUs on an Intel
-Mac. What is required is a _token.txt_ file in this directory which contains
-a valid Huggingface token. You need to create an account and generate a new
-access token in order to let the container download the official model files.
+In this example, we will run Stable Diffusion using a DRMAA2 JSON Job Template. The goal is to execute Stable Diffusion in a container without GPUs on an Intel Mac.
 
-You need to change the absolute path of the _token.txt_ inside the 
-_stable-diffusion.json_ file. The output image appears in the directory
-_/tmp/qsub/output_ on the host.
+To run this example, you will need a Hugging Face token, which can be generated in the Hugging Face portal. Set this token as the environment variable _HF_TOKEN_ in the _stable-diffusion.json_ file.
 
-It uses the _ghcr.io/fboulnois/stable-diffusion-docker_ image and mounts
-local folders input/ouput/cache/tmp inside the container. For more details
-please check https://github.com/fboulnois/stable-diffusion-docker/tree/main
+This example uses the _ghcr.io/fboulnois/stable-diffusion-docker_ image and mounts local folders input, output, cache, and tmp inside the container. For more details, please refer to the repository https://github.com/fboulnois/stable-diffusion-docker/tree/main.
 
-The image creation time (and quality) highly depends on the resolution and 
-iterations and of course on the absense of a GPU.
+Before running the job, make sure to pull the image first. The time taken to create the image (and its quality) depends on the resolution and iterations.
 
 ```bash
-   docker pull ghcr.io/fboulnois/stable-diffusion-docker:1.41.0
-   qsub -b docker -s -j stable-diffusion.json
+docker pull ghcr.io/fboulnois/stable-diffusion-docker:1.41.0
+qsub -b docker -s -j stable-diffusion.json
 ```
