@@ -1,5 +1,6 @@
 {
     "remoteCommand": "/bin/bash",
+    "jobCategory": "golang:latest",
     "args": [
       "-c",
       "sleep 1234"

@@ -32,6 +32,7 @@ func main() {
 			Host:     request.ServeHost,
 			Port:     request.ServePort,
 			Password: password,
+			Backend:  request.Backend,
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Qsub server failed: %s\n",

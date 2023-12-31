@@ -9,6 +9,9 @@ import (
 
 	"math/rand"
 
+	"github.com/dgruber/drmaa2os/pkg/jobtracker"
+	"github.com/dgruber/drmaa2os/pkg/jobtracker/dockertracker"
+	"github.com/dgruber/drmaa2os/pkg/jobtracker/kubernetestracker"
 	"github.com/dgruber/drmaa2os/pkg/jobtracker/remote/server"
 	genserver "github.com/dgruber/drmaa2os/pkg/jobtracker/remote/server/generated"
 	"github.com/dgruber/drmaa2os/pkg/jobtracker/simpletracker"
@@ -36,21 +39,41 @@ func Serve(c Config) error {
 		c.Port = DefaultPort
 	}
 
-	// backend process
-	jobStore, err := simpletracker.NewPersistentJobStore("qsubjob.db")
-	if err != nil {
-		return fmt.Errorf("cannot create job store: %v", err)
-	}
+	var jobTracker jobtracker.JobTracker
 
-	processTracker, err := simpletracker.NewWithJobStore(
-		"qsubsession", jobStore, true)
-	if err != nil {
-		return fmt.Errorf("cannot create process tracker: %v", err)
+	if c.Backend == "process" || c.Backend == "" {
+		fmt.Printf("Starting qsub server with process backend\n")
+		jobStore, err := simpletracker.NewPersistentJobStore("qsubjob.db")
+		if err != nil {
+			return fmt.Errorf("cannot create job store: %v", err)
+		}
+
+		jobTracker, err = simpletracker.NewWithJobStore(
+			"qsubsession", jobStore, true)
+		if err != nil {
+			return fmt.Errorf("cannot create process tracker: %v", err)
+		}
+	} else if c.Backend == "kubernetes" {
+		fmt.Printf("Starting qsub server with kubernetes backend\n")
+		var err error
+		jobTracker, err = kubernetestracker.New("qsubsession", "", nil)
+		if err != nil {
+			return fmt.Errorf("cannot create kubernetes tracker: %v", err)
+		}
+	} else if c.Backend == "docker" {
+		fmt.Printf("Starting qsub server with docker backend\n")
+		var err error
+		jobTracker, err = dockertracker.New("qsubsession")
+		if err != nil {
+			return fmt.Errorf("cannot create docker tracker: %v", err)
+		}
+	} else {
+		return fmt.Errorf("backend %s not yet implemented", c.Backend)
 	}
 
 	// connect the OpenAPI spec with the job tracker
 	// interface implementation - could be anything
-	impl, err := server.NewJobTrackerImpl(processTracker)
+	impl, err := server.NewJobTrackerImpl(jobTracker)
 	if err != nil {
 		return fmt.Errorf("cannot create job tracker implementation: %v", err)
 	}
@@ -64,7 +87,7 @@ func Serve(c Config) error {
 			"qsub": c.Password,
 		}))
 
-	fmt.Printf("Using password: %s", c.Password)
+	fmt.Println("Using password stored in ~/.qsub/secret")
 
 	m := http.NewServeMux()
 	m.Handle("/qsub/",

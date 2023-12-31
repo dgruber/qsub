@@ -9,4 +9,3 @@
     "errorPath":   "/dev/stderr",
     "jobCategory": "jupyter/scipy-notebook"
 }
-

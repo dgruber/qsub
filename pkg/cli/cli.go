@@ -244,7 +244,7 @@ Usage:
 		[--serve host[:port] ]
 		[-I | --image] container_image]
 		[ 
-			-b | --backend [process|docker|kubernetes|googlebatch|pubsub] 
+			-b | --backend [process|docker|kubernetes|googlebatch|pubsub|server] 
 			-j | --jobTemplate job_template_file
 		 |
 	   		command [args...]

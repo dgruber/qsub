@@ -107,7 +107,7 @@ func SubmitToQsubServer(host string, port int, jt drmaa2interface.JobTemplate) (
 		return nil, nil, err
 	}
 
-	fmt.Printf("Using password %s", password)
+	fmt.Println("Using password stored in ~/.qsub/secret")
 	basicAuthProvider, err := securityprovider.NewSecurityProviderBasicAuth(
 		"qsub", password)
 	if err != nil {
